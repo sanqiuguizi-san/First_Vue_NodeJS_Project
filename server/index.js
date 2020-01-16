@@ -9,6 +9,9 @@ app.use(require('cors')())
 //涉及async、await异步中间件
 app.use(express.json())
 
+//托管静态文件（上传图片资源）可以直接使用uploads路径访问其下所有资源
+app.use('/uploads',express.static(__dirname + '/uploads'))
+
 //引入MongoDB数据库
 //此处直接进入db.js（js后缀貌似可以省略）
 require('./plugins/db')(app)
