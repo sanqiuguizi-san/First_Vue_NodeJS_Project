@@ -23,7 +23,7 @@
 </template>
 
 <script>
-    //p20：导入富编辑文本框
+    //p20：导入富文本编辑器
     import { VueEditor } from 'vue2-editor'
     export default {
         props:{
@@ -39,9 +39,9 @@
         components: { VueEditor },
         methods:{
             //async与await同用
-            print(){
-                console.log(this.model);
-            },
+            // print(){
+            //     console.log(this.model);
+            // },
             async save(){
                 //P8：根据有误id执行不同的方法（区分新增和修改）
                 //传入请求主体
