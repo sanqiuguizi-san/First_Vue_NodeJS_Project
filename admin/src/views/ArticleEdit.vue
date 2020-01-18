@@ -12,11 +12,10 @@
                 <el-input v-model="model.title"></el-input>
             </el-form-item>
             <el-form-item label="文章详情">
-                <vue-editor v-model="content" ></vue-editor>
+                <vue-editor  v-model="model.body" useCustomImageHandler  @image-added="handleImageAdded"></vue-editor>
             </el-form-item>
             <el-form-item>
                 <el-button type="primary" native-type="submit">保存</el-button>
-                 <el-button type="primary" @click="print">打印id</el-button>
             </el-form-item>
         </el-form>
     </div>
@@ -38,10 +37,20 @@
         //导入文本框子组件
         components: { VueEditor },
         methods:{
-            //async与await同用
-            // print(){
-            //     console.log(this.model);
-            // },
+            //富文本编辑器内部的图片上传效果方法，自行修改为上传后台地址
+            //写成async await的异步方法
+            async handleImageAdded(file, Editor, cursorLocation, resetUploader) {
+                //此处上传文件需要提交表单数据,将富文本编辑器生成的file保存到表单中
+                const formData = new FormData();
+                //字段修改，前端返回给后台的Form Data键浏览器默认为"file"
+                formData.append("file", file);
+                
+                //编写调用上传图片接口的方法，传出的数据是formdata
+                const res =await this.$http.post('upload',formData)
+                //此时后端返回res中包含有res.url,使用该url传入到编辑器中
+                Editor.insertEmbed(cursorLocation, "image", res.data.url);
+                resetUploader();
+            },
             async save(){
                 //P8：根据有误id执行不同的方法（区分新增和修改）
                 //传入请求主体

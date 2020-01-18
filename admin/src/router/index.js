@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-//import Home from '../views/Home.vue'
+import Login from '../views/Login.vue'
 import Main from '../views/Main.vue'
 import CategoryEdit from '../views/CategoryEdit.vue'
 import CategoryList from '../views/CategoryList.vue'
@@ -10,10 +10,21 @@ import HeroEdit from '../views/HeroEdit.vue'
 import HeroList from '../views/HeroList.vue'
 import ArticleEdit from '../views/ArticleEdit.vue'
 import ArticleList from '../views/ArticleList.vue'
+import AdEdit from '../views/AdEdit.vue'
+import AdList from '../views/AdList.vue'
+import AdminUserEdit from '../views/AdminUserEdit.vue'
+import AdminUserList from '../views/AdminUserList.vue'
 
 Vue.use(VueRouter)
 
 const routes = [
+  //登录界面路由
+  {
+    path: '/login',
+    name: 'login',
+    component: Login,
+  },
+  //后台登录后的路由
   {
     path: '/',
     name: 'main',
@@ -73,6 +84,34 @@ const routes = [
       {
         path: '/articles/list',
         component: ArticleList
+      },
+
+      {
+        path: '/ads/create',
+        component: AdEdit
+      },
+      {
+        path: '/ads/edit/:id',
+        component: AdEdit,
+        props:true,//将url传入的参数id放入该组件中
+      },
+      {
+        path: '/ads/list',
+        component: AdList
+      },
+      
+      {
+        path: '/admin_users/create',
+        component: AdminUserEdit
+      },
+      {
+        path: '/admin_users/edit/:id',
+        component: AdminUserEdit,
+        props:true,//将url传入的参数id放入该组件中
+      },
+      {
+        path: '/admin_users/list',
+        component: AdminUserList
       },
     ]
   },

@@ -2,6 +2,9 @@ const express = require("express")
 
 const app = express()
 
+//设置后端全局秘钥，但是此处是为了简化，实际会放在环境变量而不是代码中
+app.set('secret','sanqiuguizi')
+
 //中间件
 //跨域中间件cors(此处没有设定变量，直接使用了)
 app.use(require('cors')())

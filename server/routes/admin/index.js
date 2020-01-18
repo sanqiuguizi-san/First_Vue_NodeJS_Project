@@ -5,6 +5,10 @@ module.exports = app =>{
     //此处放入的是express在admin的子路由
     //进行admin的增删改查
     const express = require('express')
+    //引入jsonwebtoken
+    const jwt =require('jsonwebtoken')
+    //引入用户信息数据库模块
+    const AdminUser = require('../../models/AdminUser')
     const router = express.Router({
         //添加一个参数，使得底部父级路由的url可以合并到子接口中的url中进行调用，否则内部是无法访问app.use中定义的参数resource的。也就无法根据地址导入模型
         mergeParams:true
@@ -45,7 +49,18 @@ module.exports = app =>{
         });
     })
     //列表页的接口对应CategoryList,获取分类列表
-    router.get('/',async(req,res)=>{
+    router.get('/',async(req,res,next)=>{
+        //P27：服务端验证路由:添加异步中间件函数，对token进行判断是否登录
+        //获取到前端给与的请求头属性，判空，再用空格分隔，拿到后面的token
+        const token = String(req.headers.authorization || '').split(' ').pop()
+        //将获取的密文解密，解构得到中间的id，正确后才查询
+        const { id } = jwt.verify(token,app.get('secret'))
+        //进行查询
+        req.user = await AdminUser.findById(id)
+        //console.log(req.user)
+        //如果中间件处理完毕，就执行后面的异步方法
+        await next()
+    },async(req,res)=>{
         //P11:因为这个父子字段可能不是所有类型都需要，所以需要设置逻辑判断
         //setOptions设置查询选项内容
         const queryOptions = {}
@@ -68,7 +83,7 @@ module.exports = app =>{
     app.use('/admin/api/rest/:resource',
     //插入一个中间件表示通用的模块导入
     async(req,res,next)=>{
-        //P11：通用数据库模型导入，因为直接传入的是categories，需要将第一个字母改大写地址同时改单数才正确
+        //P11：通用数据库模型导入，因为直接传入的是categories，需要将第一个字母改大写地址classify同时改单数才正确
         const modelName = require('inflection').classify(req.params.resource)
         //req.Model给req对象中挂载一个属性Model时需要导入的模型，这样接口中就自动放入了模型导入
         req.Model = require(`../../models/${modelName}`);
@@ -88,5 +103,37 @@ module.exports = app =>{
         file.url = `http://localhost:3000/uploads/${file.filename}`
         //将file传入到req中添加这个参数（属性，前端可以调用其中地址来显示图片
         res.send(file)
+    })
+
+    //P25:登录路由
+    app.post('/admin/api/login',async(req,res)=>{
+        const { username, password } = req.body
+        //ES语法根据用户名找用户,当对象内键和值相同，可以直接写成一个
+        //返回一个用户对象，包含其所有属性
+        //
+        const user = await AdminUser.findOne({username}).select('+password')
+        //如果没有这个用户
+        if(!user){
+            return res.status(422).send({
+                message:'用户名不存在'
+            })
+        }
+        
+        //P26:校验密码(若用户存在),比较明文和密文是否匹配(明文,密文)
+        //返回布尔值
+        const isValid = require('bcryptjs').compareSync(password,user.password)
+        if(!isValid){
+            return res.status(422).send({
+                message:'密码错误'
+            })
+        }
+
+        //返回token  安装npm i jsonwebtoken
+        //生成token,(第一个参数，保存一些数据，会散列进行加密)
+        //第二个是全局秘钥(app中定义好)，单一参数的get是获取app配置
+        const token = jwt.sign({id: user._id},app.get('secret'))
+        //此时返回的token是加密的用户信息，如果单独想要获取用户名等信息需要在对象中再加。
+        //因为token返回值不是对象，要封进去，如果还想加东西，就另外再写接口咯，懒2333
+        res.send({token});
     })
 }
