@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
 const schema = new mongoose.Schema({
     username:{ type:String },
     //设置方法将明文转为密文再保存到数据库
@@ -7,7 +8,7 @@ const schema = new mongoose.Schema({
         //查询时不返回该字段到res中
         select:false,
         set(val){
-            return require('bcryptjs').hashSync(val,10)
+            return bcrypt.hashSync(val,10)
         }
     },
 })

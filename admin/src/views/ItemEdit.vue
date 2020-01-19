@@ -12,9 +12,11 @@
                 <el-input v-model="model.name"></el-input>
             </el-form-item>
             <el-form-item label="图标">
+                <!-- P31:应该是:headers="getAuthHeader()" -->
                 <el-upload
                     class="avatar-uploader"
-                    :action="$http.defaults.baseURL + '/upload'"
+                    :action="uploadUrl"
+                    :headers="getAuthHeader()"
                     :show-file-list="false"
                     :on-success="afterUpload"
                     >

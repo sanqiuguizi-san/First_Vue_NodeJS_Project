@@ -7,6 +7,12 @@ module.exports = app =>{
     const express = require('express')
     //引入jsonwebtoken
     const jwt =require('jsonwebtoken')
+
+    //导入密码加密依赖
+    const bcrypt = require('bcryptjs')
+
+    //引入http-assert报错模块依赖
+    const assert =require('http-assert')
     //引入用户信息数据库模块
     const AdminUser = require('../../models/AdminUser')
     const router = express.Router({
@@ -49,18 +55,7 @@ module.exports = app =>{
         });
     })
     //列表页的接口对应CategoryList,获取分类列表
-    router.get('/',async(req,res,next)=>{
-        //P27：服务端验证路由:添加异步中间件函数，对token进行判断是否登录
-        //获取到前端给与的请求头属性，判空，再用空格分隔，拿到后面的token
-        const token = String(req.headers.authorization || '').split(' ').pop()
-        //将获取的密文解密，解构得到中间的id，正确后才查询
-        const { id } = jwt.verify(token,app.get('secret'))
-        //进行查询
-        req.user = await AdminUser.findById(id)
-        //console.log(req.user)
-        //如果中间件处理完毕，就执行后面的异步方法
-        await next()
-    },async(req,res)=>{
+    router.get('/',async(req,res)=>{
         //P11:因为这个父子字段可能不是所有类型都需要，所以需要设置逻辑判断
         //setOptions设置查询选项内容
         const queryOptions = {}
@@ -78,25 +73,26 @@ module.exports = app =>{
         res.send(model);
     })
 
+    
+    //P29：token登录校验判断中间件
+    const authMiddleware = require('../../middleware/auth')
+
+    //插入一个表示通用的模块导入的中间件
+    const resourceMiddleware = require('../../middleware/resource')
+
     //挂载到路由上
     //p11:crud通用接口,此处resource是前端传过来的分类名
-    app.use('/admin/api/rest/:resource',
-    //插入一个中间件表示通用的模块导入
-    async(req,res,next)=>{
-        //P11：通用数据库模型导入，因为直接传入的是categories，需要将第一个字母改大写地址classify同时改单数才正确
-        const modelName = require('inflection').classify(req.params.resource)
-        //req.Model给req对象中挂载一个属性Model时需要导入的模型，这样接口中就自动放入了模型导入
-        req.Model = require(`../../models/${modelName}`);
-        //异步，当处理完函数内内容才执行next()放入路由router
-        next();
-    },router)
+    //P29:添加登录校验中间件函数去调用,模块组件也简化为中间件
+    app.use('/admin/api/rest/:resource',authMiddleware(),resourceMiddleware(),router)
 
     //导入文件上传数据处理依赖
     //设定图片上传后保存的地址
     const multer = require('multer')
     const upload = multer({dest:__dirname + '/../../uploads'})
     //在接口中加入中间件接收处理前端给的单文件file，保存好
-    app.post('/admin/api/upload',upload.single('file'),async(req,res)=>{
+    app.post('/admin/api/upload',upload.single('file'), 
+    //P29添加登录校验中间件authMiddleware
+    authMiddleware(),async(req,res)=>{
         const file = req.file
         //将图片url地址拼好返回给前端异步显示,因为file中是没有url这个属性的
         //模板字符串动态更新file中的filename
@@ -105,28 +101,22 @@ module.exports = app =>{
         res.send(file)
     })
 
-    //P25:登录路由
+    //P25:登录路由及jwt授权
     app.post('/admin/api/login',async(req,res)=>{
         const { username, password } = req.body
         //ES语法根据用户名找用户,当对象内键和值相同，可以直接写成一个
         //返回一个用户对象，包含其所有属性
         //
         const user = await AdminUser.findOne({username}).select('+password')
-        //如果没有这个用户
-        if(!user){
-            return res.status(422).send({
-                message:'用户名不存在'
-            })
-        }
+        //如果没有这个用户,P28:使用assert暴力抛出错误err
+        //包含了状态码和message
+        //当第一个参数是满足的就不执行后面的报错
+        assert(user,422,'用户名不存在');
         
         //P26:校验密码(若用户存在),比较明文和密文是否匹配(明文,密文)
         //返回布尔值
-        const isValid = require('bcryptjs').compareSync(password,user.password)
-        if(!isValid){
-            return res.status(422).send({
-                message:'密码错误'
-            })
-        }
+        const isValid = bcrypt.compareSync(password,user.password);
+        assert(isValid,422,'密码错误');
 
         //返回token  安装npm i jsonwebtoken
         //生成token,(第一个参数，保存一些数据，会散列进行加密)
@@ -135,5 +125,15 @@ module.exports = app =>{
         //此时返回的token是加密的用户信息，如果单独想要获取用户名等信息需要在对象中再加。
         //因为token返回值不是对象，要封进去，如果还想加东西，就另外再写接口咯，懒2333
         res.send({token});
+    })
+
+    //错误处理中间件
+    app.use(async(err,req,res,next)=>{
+        //console.log(err);
+        //接收assert抛出的err中的status,没有指定的状态码的话返回500
+        //因为可能存在别的状态码
+        res.status(err.statusCode || 500).send({
+            message:err.message
+        })
     })
 }

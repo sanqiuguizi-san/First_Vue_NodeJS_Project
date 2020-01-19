@@ -1,5 +1,6 @@
 import axios from 'axios'
 import Vue from 'vue'
+import router from './router'
 
 //编写自定义axios函数，封装axios为http，用于调用基本的get和post代码，减少接口
 const http = axios.create({
@@ -10,8 +11,11 @@ const http = axios.create({
 
 //请求头拦截器，向后端传数据前先加点东西（token)
 http.interceptors.request.use(function(config){
-    //定义req中的Authorization保存授权的字段，'Bearer '用以表示类型token,注意空格
+    //P28:返回前先判空，判断是否处于token存在的登录状态
+    if(localStorage.token){
+    //定义req中的Authorization保存授权的字段，'Bearer '用以表示类型token,注意空格。因为token为空时会返回undefined，所以为空时不执行添加Authorization
     config.headers.Authorization = 'Bearer ' + localStorage.token
+    }
     return config;
 },function(error){
     return Promise.reject(error);
@@ -28,8 +32,16 @@ http.interceptors.response.use(res=>{
             type:'error',
             message:err.response.data.message
         })
-        return Promise.reject(err);
+        //err内部可以看见有状态码status
+        //console.log(err.response)
+        if(err.response.status === 401){
+            router.push('/login')
+        }
     }
+
+
+
+    return Promise.reject(err);
 })
 
 export default http
