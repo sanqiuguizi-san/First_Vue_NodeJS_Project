@@ -24,6 +24,8 @@ require('./plugins/db')(app)
 //require直接寻找目录下的package指定的main文件,一般是文件下的index
 //现指"index.js"
 require('./routes/admin')(app)
+//引入web端路由文件
+require('./routes/web')(app)
 
 //创建服务器和监听端口
 app.listen(3000,()=>{

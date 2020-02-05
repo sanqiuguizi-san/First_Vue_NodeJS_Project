@@ -71,11 +71,11 @@
             //console.log(this.id);
         },
         //P8末尾BUG，进入编辑页面后跳转其他路由比如新建路由，data中的数据不会被释放，默认复用导致提交了重复id给后台创建新类型而报错。需要监听跳转路由的时候来清空data
-        watch:{
-            $route(to,from){
-                Object.assign(this.$data, this.$options.data())
-            }
-        }
+        // watch:{
+        //     $route(to,from){
+        //         Object.assign(this.$data, this.$options.data())
+        //     }
+        // }
     }
 </script>
 

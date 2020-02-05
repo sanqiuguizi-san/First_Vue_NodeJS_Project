@@ -63,7 +63,7 @@ module.exports = app =>{
             queryOptions.populate = 'parent'
         }
         //从数据库中找到数据，限制10条或之定义
-        const items = await req.Model.find().setOptions(queryOptions).limit(10)
+        const items = await req.Model.find().setOptions(queryOptions).limit(200)
         res.send(items)
     })
     //分类页跳转编辑，加载初始数据，传入的是某个id,进入其详细编辑页面

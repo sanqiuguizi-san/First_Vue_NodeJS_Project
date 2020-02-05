@@ -7,4 +7,7 @@ module.exports = app =>{
         //参数：？查查看
         useNewUrlParser:true
     })
+
+    //P12将模型都引用一遍，传递相对路径
+    require('require-all')(__dirname + '/../models')
 }

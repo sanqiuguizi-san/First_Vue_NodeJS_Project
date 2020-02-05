@@ -24,7 +24,7 @@ Vue.mixin({
   //定义一个方法给上传图片的组件使用
   //在方法中返回一个请求头字段给
   methods:{
-    getAuthHeader(){
+    getAuthHeaders(){
       //通过判空来保证返回后端进行拆分的token不会报错
       return{
         Authorization:`Bearer ${localStorage.token || ''}`
