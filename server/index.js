@@ -8,7 +8,7 @@ app.set('secret','sanqiuguizi')
 //中间件
 //跨域中间件cors(此处没有设定变量，直接使用了)
 app.use(require('cors')())
-//express中内置的的json中间件
+//express中内置的的json中间件，包含了body-parser中间件，获取req.body
 //涉及async、await异步中间件
 app.use(express.json())
 
